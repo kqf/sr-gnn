@@ -1,5 +1,10 @@
 # kaggle API and UI archives have different names
 
+data/processed: data/
+	python model/data.py --raw $^ --out $@
+	@echo "Training dataset:"
+	@head data/processed/train.txt
+
 data/: 
 	kaggle datasets download -d chadgostopp/recsys-challenge-2015
 

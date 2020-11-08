@@ -1,2 +1,4 @@
 pytest
 kaggle
+click
+pandas
