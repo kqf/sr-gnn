@@ -25,14 +25,16 @@ def build_graph(train_data):
             sum += graph.get_edge_data(j, i)['weight']
         if sum != 0:
             for j, i in graph.in_edges(i):
-                graph.add_edge(j, i, weight=graph.get_edge_data(j, i)['weight'] / sum)
+                graph.add_edge(j, i, weight=graph.get_edge_data(
+                    j, i)['weight'] / sum)
     return graph
 
 
 def data_masks(all_usr_pois, item_tail):
     us_lens = [len(upois) for upois in all_usr_pois]
     len_max = max(us_lens)
-    us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)]
+    us_pois = [upois + item_tail * (len_max - le)
+               for upois, le in zip(all_usr_pois, us_lens)]
     us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens]
     return us_pois, us_msks, len_max
 
