@@ -10,7 +10,6 @@ from model.tmodel import trans_to_cuda, SessionGraph, train_test
     "--path", type=click.Path(exists=True), default="data/processed/")
 def main(path):
     train, test, valid = read_data(path)
-    import ipdb; ipdb.set_trace(); import IPython; IPython.embed() # noqa
     data = ev_data(train["text"])
 
     raw_data = (data["text"], data["gold"])
