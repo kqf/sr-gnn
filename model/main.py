@@ -16,14 +16,12 @@ def main(path):
     n_node = 43098
 
     dataset = build_preprocessor().fit_transform(data)
-    n_node = 43098
+    n_node = len(dataset.fields["text"].vocab.stoi)
 
     batches = SequenceIterator(dataset, batch_size=100)
-    for batch in batches:
-        batch
 
-    raw_data = (data["text"], data["gold"])
-    dataset = Data(raw_data)
+    # raw_data = (data["text"], data["gold"])
+    # dataset = Data(raw_data)
 
     optf = namedtuple(
         "opt", [
@@ -49,7 +47,7 @@ def main(path):
     )
 
     model = trans_to_cuda(SessionGraph(opt, n_node))
-    train_test(model, dataset, dataset)
+    train_test(model, batches, batches)
 
 
 if __name__ == '__main__':

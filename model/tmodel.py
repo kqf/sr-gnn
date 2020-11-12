@@ -120,41 +120,36 @@ def forward(model, batch):
     return targets, model.compute_scores(seq_hidden, mask)
 
 
-def train_test(model, train_data, test_data):
+def train_test(model, trainiterator, testiterator):
     print('start training: ', datetime.datetime.now())
     model.train()
     total_loss = 0.0
-    slices = train_data.generate_batch(model.batch_size)
-    for j, i in enumerate(slices):
+    for j, batch in enumerate(trainiterator):
         model.optimizer.zero_grad()
-
-        batch = train_data.get_slice(i)
         targets, scores = forward(model, batch)
         targets = trans_to_cuda(torch.Tensor(targets).long())
-        loss = model.loss_function(scores, targets - 1)
+        loss = model.loss_function(scores, targets)
         loss.backward()
         model.optimizer.step()
         model.scheduler.step()
         total_loss += loss
-        if j % int(len(slices) / 5 + 1) == 0:
-            print('[%d/%d] Loss: %.4f' % (j, len(slices), loss.item()))
+        if j % int(len(batch[0][0]) / 5 + 1) == 0:
+            print('[%d/%d] Loss: %.4f' % (j, len(batch[0][0]), loss.item()))
     print('\tLoss:\t%.3f' % total_loss)
 
     print('start predicting: ', datetime.datetime.now())
     model.eval()
-    hit, mrr = [], []
-    slices = test_data.generate_batch(model.batch_size)
-    for i in slices:
-        batch = test_data.get_slice(i)
+    # hit, mrr = [], []
+    for batch in testiterator:
         targets, scores = forward(model, batch)
         sub_scores = scores.topk(20)[1]
         sub_scores = trans_to_cpu(sub_scores).detach().numpy()
-        for score, target, mask in zip(sub_scores, targets, test_data.mask):
-            hit.append(np.isin(target - 1, score))
-            if len(np.where(score == target - 1)[0]) == 0:
-                mrr.append(0)
-            else:
-                mrr.append(1 / (np.where(score == target - 1)[0][0] + 1))
-    hit = np.mean(hit) * 100
-    mrr = np.mean(mrr) * 100
-    return hit, mrr
+    #     for score, target, mask in zip(sub_scores, targets, test_data.mask):
+    #         hit.append(np.isin(target - 1, score))
+    #         if len(np.where(score == target - 1)[0]) == 0:
+    #             mrr.append(0)
+    #         else:
+    #             mrr.append(1 / (np.where(score == target - 1)[0][0] + 1))
+    # hit = np.mean(hit) * 100
+    # mrr = np.mean(mrr) * 100
+    # return hit, mrr
