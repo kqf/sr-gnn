@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def split(x):
-    x = [int(e) for e in x]
+    # x = [int(e) for e in x]
     return [(x[:i + 1], x[i + 1]) for i in range(len(x) - 1)]
 
 
@@ -137,13 +137,13 @@ def main(raw, out, train, test):
     valid = valid[np.in1d(valid["item_id"], train["item_id"])]
     valid = remove_short(valid, "session_id")
 
-    stoi = IndexMapper()
+    # stoi = IndexMapper()
 
-    train["item_id"] = train["item_id"].apply(stoi)
-    stoi.fit = False
+    # train["item_id"] = train["item_id"].apply(stoi)
+    # stoi.fit = False
 
-    valid["item_id"] = valid["item_id"].apply(stoi)
-    test["item_id"] = test["item_id"].apply(stoi)
+    # valid["item_id"] = valid["item_id"].apply(stoi)
+    # test["item_id"] = test["item_id"].apply(stoi)
 
     train_sessions = build_sessions(train)
     valid_sessions = build_sessions(valid)

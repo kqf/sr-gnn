@@ -4,6 +4,8 @@ from model.data import read_data, ev_data
 from model.utils import Data
 from model.tmodel import trans_to_cuda, SessionGraph, train_test
 
+from model.dataset import build_preprocessor, SequenceIterator
+
 
 @click.command()
 @click.option(
@@ -11,11 +13,15 @@ from model.tmodel import trans_to_cuda, SessionGraph, train_test
 def main(path):
     train, test, valid = read_data(path)
     data = ev_data(train["text"])
-
-    raw_data = (data["text"], data["gold"])
-    dataset = Data(raw_data)
-
     n_node = 43098
+
+    dataset = build_preprocessor().fit_transform(data)
+    n_node = len(dataset.fields["text"].vocab.stoi)
+
+    batches = SequenceIterator(dataset, batch_size=100)
+
+    # raw_data = (data["text"], data["gold"])
+    # dataset = Data(raw_data)
 
     optf = namedtuple(
         "opt", [
@@ -41,7 +47,7 @@ def main(path):
     )
 
     model = trans_to_cuda(SessionGraph(opt, n_node))
-    train_test(model, dataset, dataset)
+    train_test(model, batches, batches)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,10 @@
 # kaggle API and UI archives have different names
 
+
+train: data/processed
+	python model/main.py
+
+
 data/processed: data/
 	python model/data.py --raw $^ --out $@
 	@echo "Training dataset:"
