@@ -7,6 +7,7 @@ import pandas as pd
 
 
 def split(x):
+    x = [int(e) for e in x]
     return [(x[:i + 1], x[i + 1]) for i in range(len(x) - 1)]
 
 
@@ -17,6 +18,17 @@ def read_data(raw):
         pd.read_csv(path / 'test.txt', names=["text"]),
         pd.read_csv(path / 'valid.txt', names=["text"]),
     )
+
+
+class IndexMapper:
+    def __init__(self, fit=True):
+        self.data = dict()
+        self.fit = fit
+
+    def __call__(self, x):
+        if x not in self.data and self.fit:
+            self.data[x] = len(self.data) + 1
+        return self.data.get(x, 0)
 
 
 def ev_data(dataset):
@@ -54,7 +66,6 @@ def read_file(path, filename, frac=None):
         dtype={0: np.int32, 1: str, 2: np.int64},
     )
     df["time"] = pd.to_datetime(df["time"])
-
     # The original data preprocessing:
     df = remove_short(df, "session_id")
     df = remove_short(df, "item_id", 5)
@@ -125,6 +136,14 @@ def main(raw, out, train, test):
 
     valid = valid[np.in1d(valid["item_id"], train["item_id"])]
     valid = remove_short(valid, "session_id")
+
+    stoi = IndexMapper()
+
+    train["item_id"] = train["item_id"].apply(stoi)
+    stoi.fit = False
+
+    valid["item_id"] = valid["item_id"].apply(stoi)
+    test["item_id"] = test["item_id"].apply(stoi)
 
     train_sessions = build_sessions(train)
     valid_sessions = build_sessions(valid)

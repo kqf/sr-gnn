@@ -3,3 +3,6 @@
 *.python-version
 *.dat
 *.txt
+
+
+*.egg*
