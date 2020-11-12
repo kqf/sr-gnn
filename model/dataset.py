@@ -1,7 +1,10 @@
 import warnings
 
+import torch
 from sklearn.base import BaseEstimator, TransformerMixin
 from torchtext.data import Example, Dataset, Field, BucketIterator
+
+from model.utils import batch as batchf
 
 
 class PandasDataset(Dataset):
@@ -37,7 +40,7 @@ def build_preprocessor(min_freq=5):
             unk_token="<unk>",
             eos_token=None,
             batch_first=True,
-            pad_first=True,
+            # pad_first=True,
         )
         fields = [
             ('text', text_field),
@@ -52,6 +55,9 @@ class SequenceIterator(BucketIterator):
             super().__init__(*args, **kwargs)
 
     def __iter__(self):
+        pi = self.dataset.fields["text"].vocab.stoi["<pad>"]
         with warnings.catch_warnings(record=True):
             for batch in super().__iter__():
-                yield batch(batch.text, batch.gold.view(-1))
+                mask = ~torch.eq(batch.text, pi)
+                seq, target = batch.text, batch.gold.view(-1)
+                yield batchf(seq.numpy(), mask.numpy(), target.numpy())

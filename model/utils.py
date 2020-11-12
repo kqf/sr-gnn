@@ -56,8 +56,10 @@ def split_validation(train_set, valid_portion):
 
 def batch(inputs, mask, targets):
     items, n_node, A, alias_inputs = [], [], [], []
+
     for u_input in inputs:
         n_node.append(len(np.unique(u_input)))
+
     max_n_node = np.max(n_node)
     for u_input in inputs:
         node = np.unique(u_input)
@@ -78,6 +80,7 @@ def batch(inputs, mask, targets):
         u_A = np.concatenate([u_A_in, u_A_out]).transpose()
         A.append(u_A)
         alias_inputs.append([np.where(node == i)[0][0] for i in u_input])
+
     return alias_inputs, A, items, mask, targets
 
 

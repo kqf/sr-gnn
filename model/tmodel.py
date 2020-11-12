@@ -108,8 +108,8 @@ def trans_to_cpu(variable):
         return variable
 
 
-def forward(model, i, data):
-    alias_inputs, A, items, mask, targets = data.get_slice(i)
+def forward(model, batch):
+    alias_inputs, A, items, mask, targets = batch
     alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
     items = trans_to_cuda(torch.Tensor(items).long())
     A = trans_to_cuda(torch.Tensor(A).float())
@@ -125,9 +125,11 @@ def train_test(model, train_data, test_data):
     model.train()
     total_loss = 0.0
     slices = train_data.generate_batch(model.batch_size)
-    for i, j in zip(slices, np.arange(len(slices))):
+    for j, i in enumerate(slices):
         model.optimizer.zero_grad()
-        targets, scores = forward(model, i, train_data)
+
+        batch = train_data.get_slice(i)
+        targets, scores = forward(model, batch)
         targets = trans_to_cuda(torch.Tensor(targets).long())
         loss = model.loss_function(scores, targets - 1)
         loss.backward()
@@ -143,7 +145,8 @@ def train_test(model, train_data, test_data):
     hit, mrr = [], []
     slices = test_data.generate_batch(model.batch_size)
     for i in slices:
-        targets, scores = forward(model, i, test_data)
+        batch = test_data.get_slice(i)
+        targets, scores = forward(model, batch)
         sub_scores = scores.topk(20)[1]
         sub_scores = trans_to_cpu(sub_scores).detach().numpy()
         for score, target, mask in zip(sub_scores, targets, test_data.mask):

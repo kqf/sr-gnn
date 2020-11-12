@@ -4,6 +4,8 @@ from model.data import read_data, ev_data
 from model.utils import Data
 from model.tmodel import trans_to_cuda, SessionGraph, train_test
 
+from model.dataset import build_preprocessor, SequenceIterator
+
 
 @click.command()
 @click.option(
@@ -11,11 +13,17 @@ from model.tmodel import trans_to_cuda, SessionGraph, train_test
 def main(path):
     train, test, valid = read_data(path)
     data = ev_data(train["text"])
+    n_node = 43098
+
+    dataset = build_preprocessor().fit_transform(data)
+    n_node = 43098
+
+    batches = SequenceIterator(dataset, batch_size=100)
+    for batch in batches:
+        batch
 
     raw_data = (data["text"], data["gold"])
     dataset = Data(raw_data)
-
-    n_node = 43098
 
     optf = namedtuple(
         "opt", [
