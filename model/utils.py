@@ -30,6 +30,7 @@ def build_graph(train_data):
     return graph
 
 
+# Pads everything to the same length
 def data_masks(all_usr_pois, item_tail):
     us_lens = [len(upois) for upois in all_usr_pois]
     len_max = max(us_lens)
