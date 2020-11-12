@@ -1,13 +1,14 @@
 import warnings
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from torchtext.data import Example, Dataset, Field, BucketIterator
 
 
 class PandasDataset(Dataset):
     def __init__(self, df, fields):
-        proc = [df[col].apply(f.preprocess) for col, f in self.fields]
-        examples = [Example.fromlist(f, self.fields) for f in zip(*proc)]
-        super().__init__(examples, self.fields)
+        proc = [df[col].apply(f.preprocess) for col, f in fields]
+        examples = [Example.fromlist(f, fields) for f in zip(*proc)]
+        super().__init__(examples, fields)
 
 
 class TextPreprocessor(BaseEstimator, TransformerMixin):
@@ -53,4 +54,4 @@ class SequenceIterator(BucketIterator):
     def __iter__(self):
         with warnings.catch_warnings(record=True):
             for batch in super().__iter__():
-                yield batch.text, batch.gold.view(-1)
+                yield batch(batch.text, batch.gold.view(-1))
