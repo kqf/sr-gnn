@@ -88,10 +88,22 @@ class SessionGraph(Module):
         scores = torch.matmul(a, b.transpose(1, 0))
         return scores
 
-    def forward(self, inputs, A):
+    def _forward(self, inputs, A):
         hidden = self.embedding(inputs)
         hidden = self.gnn(A, hidden)
         return hidden
+
+    def forward(self, batch):
+        alias_inputs, A, items, mask, targets = batch
+        alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
+        items = trans_to_cuda(torch.Tensor(items).long())
+        A = trans_to_cuda(torch.Tensor(A).float())
+        mask = trans_to_cuda(torch.Tensor(mask).long())
+        hidden = self._forward(items, A)
+        get = lambda i: hidden[i][alias_inputs[i]]
+        seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
+        return targets, self.compute_scores(seq_hidden, mask)
+
 
 
 def trans_to_cuda(variable):
@@ -108,25 +120,13 @@ def trans_to_cpu(variable):
         return variable
 
 
-def forward(model, batch):
-    alias_inputs, A, items, mask, targets = batch
-    alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
-    items = trans_to_cuda(torch.Tensor(items).long())
-    A = trans_to_cuda(torch.Tensor(A).float())
-    mask = trans_to_cuda(torch.Tensor(mask).long())
-    hidden = model(items, A)
-    get = lambda i: hidden[i][alias_inputs[i]]
-    seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
-    return targets, model.compute_scores(seq_hidden, mask)
-
-
 def train_test(model, trainiterator, testiterator):
     print('start training: ', datetime.datetime.now())
     model.train()
     total_loss = 0.0
     for j, batch in enumerate(trainiterator):
         model.optimizer.zero_grad()
-        targets, scores = forward(model, batch)
+        targets, scores = model(batch)
         targets = trans_to_cuda(torch.Tensor(targets).long())
         loss = model.loss_function(scores, targets)
         loss.backward()
