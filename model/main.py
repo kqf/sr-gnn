@@ -5,6 +5,7 @@ from model.utils import Data
 from model.tmodel import trans_to_cuda, SessionGraph, train_test
 
 from model.dataset import build_preprocessor, SequenceIterator
+from model.pipeline import build_model
 
 
 @click.command()
@@ -14,11 +15,6 @@ def main(path):
     train, test, valid = read_data(path)
     data = ev_data(train["text"])
     n_node = 43098
-
-    dataset = build_preprocessor().fit_transform(data)
-    n_node = len(dataset.fields["text"].vocab.stoi)
-
-    batches = SequenceIterator(dataset, batch_size=100)
 
     # raw_data = (data["text"], data["gold"])
     # dataset = Data(raw_data)
@@ -46,8 +42,11 @@ def main(path):
         lr_dc=0.1
     )
 
-    model = trans_to_cuda(SessionGraph(opt, n_node))
-    train_test(model, batches, batches)
+    model = build_model(opt, n_node)
+    model.fit(data)
+
+    # model = trans_to_cuda(SessionGraph(opt, n_node))
+    # train_test(model, batches, batches)
 
 
 if __name__ == '__main__':

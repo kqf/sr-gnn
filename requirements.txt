@@ -6,3 +6,4 @@ torch
 networkx
 torchtext
 scikit-learn
+skorch
