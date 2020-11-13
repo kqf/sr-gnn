@@ -3,8 +3,8 @@ import skorch
 
 from sklearn.pipeline import make_pipeline
 
-from model.tmodel import SessionGraph
-from model.dataset import SequenceIterator, build_preprocessor
+from srgnn.tmodel import SessionGraph
+from srgnn.dataset import SequenceIterator, build_preprocessor
 
 
 def build_model(opt, n_node):

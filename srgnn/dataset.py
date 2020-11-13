@@ -4,7 +4,7 @@ import torch
 from sklearn.base import BaseEstimator, TransformerMixin
 from torchtext.data import Example, Dataset, Field, BucketIterator
 
-from model.utils import batch as batchf
+from srgnn.utils import batch as batchf
 
 
 class PandasDataset(Dataset):

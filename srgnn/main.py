@@ -1,11 +1,11 @@
 import click
 from collections import namedtuple
-from model.data import read_data, ev_data
-from model.utils import Data
-from model.tmodel import trans_to_cuda, SessionGraph, train_test
+from srgnn.data import read_data, ev_data
+from srgnn.utils import Data
+from srgnn.tmodel import trans_to_cuda, SessionGraph, train_test
 
-from model.dataset import build_preprocessor, SequenceIterator
-from model.pipeline import build_model
+from srgnn.dataset import build_preprocessor, SequenceIterator
+from srgnn.model import build_model
 
 
 @click.command()
