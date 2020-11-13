@@ -8,7 +8,6 @@ Created on July, 2018
 
 import datetime
 import math
-import numpy as np
 import torch
 from torch import nn
 from torch.nn import Module, Parameter
@@ -93,8 +92,7 @@ class SessionGraph(Module):
         hidden = self.gnn(A, hidden)
         return hidden
 
-    def forward(self, batch):
-        alias_inputs, A, items, mask, targets = batch
+    def forward(self, alias_inputs, A, items, mask):
         alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
         items = trans_to_cuda(torch.Tensor(items).long())
         A = trans_to_cuda(torch.Tensor(A).float())
@@ -102,7 +100,7 @@ class SessionGraph(Module):
         hidden = self._forward(items, A)
         get = lambda i: hidden[i][alias_inputs[i]]
         seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
-        return targets, self.compute_scores(seq_hidden, mask)
+        return self.compute_scores(seq_hidden, mask)
 
 
 
@@ -124,9 +122,9 @@ def train_test(model, trainiterator, testiterator):
     print('start training: ', datetime.datetime.now())
     model.train()
     total_loss = 0.0
-    for j, batch in enumerate(trainiterator):
+    for j, (*batch, targets) in enumerate(trainiterator):
         model.optimizer.zero_grad()
-        targets, scores = model(batch)
+        scores = model(*batch)
         targets = trans_to_cuda(torch.Tensor(targets).long())
         loss = model.loss_function(scores, targets)
         loss.backward()
@@ -138,12 +136,12 @@ def train_test(model, trainiterator, testiterator):
     print('\tLoss:\t%.3f' % total_loss)
 
     print('start predicting: ', datetime.datetime.now())
-    model.eval()
+    # model.eval()
     # hit, mrr = [], []
-    for batch in testiterator:
-        targets, scores = forward(model, batch)
-        sub_scores = scores.topk(20)[1]
-        sub_scores = trans_to_cpu(sub_scores).detach().numpy()
+    # for batch in testiterator:
+    #     scores = forward(*batch)
+    #     sub_scores = scores.topk(20)[1]
+    #     sub_scores = trans_to_cpu(sub_scores).detach().numpy()
     #     for score, target, mask in zip(sub_scores, targets, test_data.mask):
     #         hit.append(np.isin(target - 1, score))
     #         if len(np.where(score == target - 1)[0]) == 0:
