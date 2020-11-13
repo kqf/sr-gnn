@@ -93,10 +93,6 @@ class SessionGraph(Module):
         return hidden
 
     def forward(self, alias_inputs, A, items, mask):
-        alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
-        items = trans_to_cuda(torch.Tensor(items).long())
-        A = trans_to_cuda(torch.Tensor(A).float())
-        mask = trans_to_cuda(torch.Tensor(mask).long())
         hidden = self._forward(items, A)
         get = lambda i: hidden[i][alias_inputs[i]]
         seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
@@ -122,17 +118,17 @@ def train_test(model, trainiterator, testiterator):
     print('start training: ', datetime.datetime.now())
     model.train()
     total_loss = 0.0
-    for j, (*batch, targets) in enumerate(trainiterator):
+    for j, (batch, targets) in enumerate(trainiterator):
         model.optimizer.zero_grad()
-        scores = model(*batch)
-        targets = trans_to_cuda(torch.Tensor(targets).long())
+        scores = model(**batch)
         loss = model.loss_function(scores, targets)
         loss.backward()
         model.optimizer.step()
         model.scheduler.step()
         total_loss += loss
-        if j % int(len(batch[0][0]) / 5 + 1) == 0:
-            print('[%d/%d] Loss: %.4f' % (j, len(batch[0][0]), loss.item()))
+        if j % int(len(batch["items"]) / 5 + 1) == 0:
+            print('[%d/%d] Loss: %.4f' % (
+                j, len(batch["items"][0]), loss.item()))
     print('\tLoss:\t%.3f' % total_loss)
 
     print('start predicting: ', datetime.datetime.now())

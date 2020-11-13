@@ -49,6 +49,20 @@ def build_preprocessor(min_freq=5):
         return TextPreprocessor(fields, min_freq=min_freq)
 
 
+def batch_tensors(seq, mask, target, device):
+    alias_inputs, A, items, mask, targets = batchf(
+        seq.numpy(), mask.numpy(), target.numpy())
+
+    batch = {}
+    batch["alias_inputs"] = torch.tensor(alias_inputs).long().to(device)
+    batch["items"] = torch.tensor(items).long().to(device)
+    batch["A"] = torch.tensor(A).float().to(device)
+    batch["mask"] = torch.tensor(mask).long().to(device)
+
+    target = torch.tensor(target).long().to(device)
+    return batch, target
+
+
 class SequenceIterator(BucketIterator):
     def __init__(self, *args, **kwargs):
         with warnings.catch_warnings(record=True):
@@ -60,4 +74,4 @@ class SequenceIterator(BucketIterator):
             for batch in super().__iter__():
                 mask = ~torch.eq(batch.text, pi)
                 seq, target = batch.text, batch.gold.view(-1)
-                yield batchf(seq.numpy(), mask.numpy(), target.numpy())
+                yield batch_tensors(seq, mask, target, self.device)
