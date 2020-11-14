@@ -2,7 +2,7 @@ import click
 from collections import namedtuple
 from srgnn.data import read_data, ev_data
 from srgnn.utils import Data
-from srgnn.tmodel import trans_to_cuda, SessionGraph, train_test
+from srgnn.modules import trans_to_cuda, SessionGraph, train_test
 
 from srgnn.dataset import build_preprocessor, SequenceIterator
 from srgnn.model import build_model

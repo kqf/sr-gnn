@@ -9,6 +9,8 @@ from srgnn.utils import batch as batchf
 
 class PandasDataset(Dataset):
     def __init__(self, df, fields):
+        # Fix for scorch sparsity check issues
+        self.is_sparse = False
         proc = [df[col].apply(f.preprocess) for col, f in fields]
         examples = [Example.fromlist(f, fields) for f in zip(*proc)]
         super().__init__(examples, fields)
