@@ -1,20 +1,16 @@
-#!/usr/bin/env python36
-# -*- coding: utf-8 -*-
-"""
-Created on July, 2018
-
-@author: Tangrizzly
-"""
-
-import datetime
 import math
 import torch
 from torch import nn
-from torch.nn import Module, Parameter
+from torch.nn import Parameter
 import torch.nn.functional as F
 
 
-class GNN(Module):
+def init_weights(module):
+    for weight in module.parameters():
+        weight.data.fill_(1. / weight.shape[-1])
+
+
+class GNN(torch.nn.Module):
     def __init__(self, hidden_size, step=1):
         super(GNN, self).__init__()
         self.step = step
@@ -52,21 +48,19 @@ class GNN(Module):
         return hidden
 
 
-class SessionGraph(Module):
+class SRGNN(torch.nn.Module):
     def __init__(self, hidden_size, n_node, nonhybrid=True, step=1):
-        super(SessionGraph, self).__init__()
+        super(SRGNN, self).__init__()
         self.hidden_size = hidden_size
         self.n_node = n_node
         self.nonhybrid = nonhybrid
 
-        self.embedding = nn.Embedding(self.n_node, self.hidden_size)
-        self.gnn = GNN(self.hidden_size, step=step)
-        self.linear_one = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_two = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_three = nn.Linear(self.hidden_size, 1, bias=False)
-        self.linear_transform = nn.Linear(self.hidden_size * 2, self.hidden_size, bias=True)
-        self.loss_function = nn.CrossEntropyLoss()
-        # self.reset_parameters()
+        self._emb = nn.Embedding(self.n_node, self.hidden_size)
+        self._gnn = GNN(self.hidden_size, step=step)
+        self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
+        self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
+        self._fc3 = torch.nn.Linear(hidden_size, 1)
+        self._fcp = torch.nn.Linear(hidden_size * 2, hidden_size)
 
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)
@@ -75,19 +69,19 @@ class SessionGraph(Module):
 
     def compute_scores(self, hidden, mask):
         ht = hidden[torch.arange(mask.shape[0]).long(), torch.sum(mask, 1) - 1]  # batch_size x latent_size
-        q1 = self.linear_one(ht).view(ht.shape[0], 1, ht.shape[1])  # batch_size x 1 x latent_size
-        q2 = self.linear_two(hidden)  # batch_size x seq_length x latent_size
-        alpha = self.linear_three(torch.sigmoid(q1 + q2))
+        q1 = self._fc1(ht).view(ht.shape[0], 1, ht.shape[1])  # batch_size x 1 x latent_size
+        q2 = self._fc2(hidden)  # batch_size x seq_length x latent_size
+        alpha = self._fc3(torch.sigmoid(q1 + q2))
         a = torch.sum(alpha * hidden * mask.view(mask.shape[0], -1, 1).float(), 1)
         if not self.nonhybrid:
-            a = self.linear_transform(torch.cat([a, ht], 1))
-        b = self.embedding.weight[1:]  # n_nodes x latent_size
+            a = self._fcp(torch.cat([a, ht], 1))
+        b = self._emb.weight[1:]  # n_nodes x latent_size
         scores = torch.matmul(a, b.transpose(1, 0))
         return scores
 
     def _forward(self, inputs, A):
-        hidden = self.embedding(inputs)
-        hidden = self.gnn(A, hidden)
+        emb = self._emb(inputs)
+        hidden = self._gnn(A, emb)
         return hidden
 
     def forward(self, alias_inputs, A, items, mask):
