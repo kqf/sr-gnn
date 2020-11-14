@@ -7,7 +7,7 @@ from srgnn.modules import SessionGraph
 from srgnn.dataset import SequenceIterator, build_preprocessor
 
 
-def build_model():
+def build_model(max_epochs=5):
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -24,7 +24,7 @@ def build_model():
         optimizer__lr=0.001,
         optimizer__weight_decay=1e-5,
         criterion=torch.nn.CrossEntropyLoss,
-        max_epochs=5,
+        max_epochs=max_epochs,
         batch_size=100,
         iterator_train=SequenceIterator,
         # iterator_train__shuffle=True,
