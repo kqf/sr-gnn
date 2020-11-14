@@ -10,6 +10,26 @@ def init_weights(module):
         weight.data.fill_(1. / weight.shape[-1])
 
 
+def batch_emb(emb, x):
+    """ Embeds x with matrix emb along batch dimension
+
+    In other words converts the lookup in [batch, seq, hidden]
+    to [batch * seq, hidden]
+
+    Assuming that x is of the shape [batch, seq]
+    """
+    eshape = emb.shape
+    # embs [batch * seq, hidden]
+    embs = emb.view(-1, eshape[-1])
+
+    device = embs.device
+    offset = torch.arange(eshape[0], device=device) * (x.shape[1])
+
+    # Convert sequence of indexes to indexes in a new matrix
+    idx = x + offset.unsqueeze(-1)
+    return embs[idx]
+
+
 class GNN(torch.nn.Module):
     def __init__(self, hidden_size, step=1):
         super(GNN, self).__init__()
@@ -24,13 +44,18 @@ class GNN(torch.nn.Module):
         self.b_iah = Parameter(torch.Tensor(self.hidden_size))
         self.b_oah = Parameter(torch.Tensor(self.hidden_size))
 
-        self.linear_edge_in = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_edge_out = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_edge_f = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
+        self.linear_edge_in = nn.Linear(
+            self.hidden_size, self.hidden_size, bias=True)
+        self.linear_edge_out = nn.Linear(
+            self.hidden_size, self.hidden_size, bias=True)
+        self.linear_edge_f = nn.Linear(
+            self.hidden_size, self.hidden_size, bias=True)
 
     def GNNCell(self, A, hidden):
-        input_in = torch.matmul(A[:, :, :A.shape[1]], self.linear_edge_in(hidden)) + self.b_iah
-        input_out = torch.matmul(A[:, :, A.shape[1]: 2 * A.shape[1]], self.linear_edge_out(hidden)) + self.b_oah
+        input_in = torch.matmul(A[:, :, :A.shape[1]],
+                                self.linear_edge_in(hidden)) + self.b_iah
+        input_out = torch.matmul(
+            A[:, :, A.shape[1]: 2 * A.shape[1]], self.linear_edge_out(hidden)) + self.b_oah
         inputs = torch.cat([input_in, input_out], 2)
         gi = F.linear(inputs, self.w_ih, self.b_ih)
         gh = F.linear(hidden, self.w_hh, self.b_hh)
@@ -68,11 +93,14 @@ class SRGNN(torch.nn.Module):
             weight.data.uniform_(-stdv, stdv)
 
     def compute_scores(self, hidden, mask):
-        ht = hidden[torch.arange(mask.shape[0]).long(), torch.sum(mask, 1) - 1]  # batch_size x latent_size
-        q1 = self._fc1(ht).view(ht.shape[0], 1, ht.shape[1])  # batch_size x 1 x latent_size
+        ht = hidden[torch.arange(mask.shape[0]).long(), torch.sum(
+            mask, 1) - 1]  # batch_size x latent_size
+        # batch_size x 1 x latent_size
+        q1 = self._fc1(ht).view(ht.shape[0], 1, ht.shape[1])
         q2 = self._fc2(hidden)  # batch_size x seq_length x latent_size
         alpha = self._fc3(torch.sigmoid(q1 + q2))
-        a = torch.sum(alpha * hidden * mask.view(mask.shape[0], -1, 1).float(), 1)
+        a = torch.sum(alpha * hidden *
+                      mask.view(mask.shape[0], -1, 1).float(), 1)
         if not self.nonhybrid:
             a = self._fcp(torch.cat([a, ht], 1))
         b = self._emb.weight[1:]  # n_nodes x latent_size
@@ -85,7 +113,7 @@ class SRGNN(torch.nn.Module):
         return hidden
 
     def forward(self, alias_inputs, A, items, mask):
+        # [batch_size, seq_len, hidden_size]
         hidden = self._forward(items, A)
-        get = lambda i: hidden[i][alias_inputs[i]]
-        seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
-        return self.compute_scores(seq_hidden, mask)
+        seq = batch_emb(hidden, alias_inputs)
+        return self.compute_scores(seq, mask)
