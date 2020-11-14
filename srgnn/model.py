@@ -7,7 +7,7 @@ from srgnn.modules import SessionGraph
 from srgnn.dataset import SequenceIterator, build_preprocessor
 
 
-def build_model(opt, n_node):
+def build_model():
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -17,7 +17,7 @@ def build_model(opt, n_node):
     model = skorch.NeuralNet(
         module=SessionGraph,
         module__hidden_size=100,
-        module__n_node=n_node,
+        module__n_node=30000,
         module__nonhybrid=True,
         module__step=1,
         optimizer=torch.optim.Adam,
