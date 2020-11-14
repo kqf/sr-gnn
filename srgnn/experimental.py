@@ -5,11 +5,6 @@ from torch.nn import Parameter
 import torch.nn.functional as F
 
 
-def init_weights(module):
-    for weight in module.parameters():
-        weight.data.fill_(1. / weight.shape[-1])
-
-
 def batch_emb(emb, x):
     """ Embeds x with matrix emb along batch dimension
 
@@ -84,7 +79,7 @@ class SRGNN(torch.nn.Module):
         self._gnn = GNN(self.hidden_size, step=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
-        self._fc3 = torch.nn.Linear(hidden_size, 1)
+        self._fc3 = torch.nn.Linear(hidden_size, 1, bias=False)
         self._fcp = torch.nn.Linear(hidden_size * 2, hidden_size)
 
     def reset_parameters(self):

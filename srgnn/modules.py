@@ -1,12 +1,3 @@
-#!/usr/bin/env python36
-# -*- coding: utf-8 -*-
-"""
-Created on July, 2018
-
-@author: Tangrizzly
-"""
-
-import datetime
 import math
 import torch
 from torch import nn
@@ -66,7 +57,7 @@ class SessionGraph(Module):
         self.linear_three = nn.Linear(self.hidden_size, 1, bias=False)
         self.linear_transform = nn.Linear(self.hidden_size * 2, self.hidden_size, bias=True)
         self.loss_function = nn.CrossEntropyLoss()
-        # self.reset_parameters()
+        self.reset_parameters()
 
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)

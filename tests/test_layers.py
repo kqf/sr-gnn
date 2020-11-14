@@ -1,18 +1,17 @@
 import torch
 import pytest
-import random
-import numpy as np
 
 from srgnn.modules import SessionGraph
-from srgnn.experimental import SRGNN, init_weights
+from srgnn.experimental import SRGNN
 from srgnn.dataset import batch_tensors
 
-SEED = 137
-random.seed(SEED)
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-torch.cuda.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
+
+def _init(module):
+    """Ensures deterministic weights
+    """
+    for weight in module.parameters():
+        weight.data.fill_(1. / weight.shape[-1])
+    return module
 
 
 @pytest.fixture
@@ -25,13 +24,10 @@ def batch(batch_size=128, vocab_size=100, seq_len=12):
 
 
 def test_modules(batch):
-    original = SessionGraph(100, 30000)
-    init_weights(original)
+    original = _init(SessionGraph(100, 30000))
     reference = original(**batch)
 
-    experimental = SRGNN(100, 30000)
-    init_weights(experimental)
+    experimental = _init(SRGNN(100, 30000))
     output = experimental(**batch)
 
-    print(output - reference)
-    # assert torch.allclose(output, reference)
+    assert torch.allclose(output, reference)
