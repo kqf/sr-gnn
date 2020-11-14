@@ -1,10 +1,7 @@
 import click
 from collections import namedtuple
 from srgnn.data import read_data, ev_data
-from srgnn.utils import Data
-from srgnn.modules import trans_to_cuda, SessionGraph, train_test
 
-from srgnn.dataset import build_preprocessor, SequenceIterator
 from srgnn.model import build_model
 
 
@@ -15,9 +12,6 @@ def main(path):
     train, test, valid = read_data(path)
     data = ev_data(train["text"])
     n_node = 43098
-
-    # raw_data = (data["text"], data["gold"])
-    # dataset = Data(raw_data)
 
     optf = namedtuple(
         "opt", [
@@ -44,9 +38,6 @@ def main(path):
 
     model = build_model(opt, n_node)
     model.fit(data)
-
-    # model = trans_to_cuda(SessionGraph(opt, n_node))
-    # train_test(model, batches, batches)
 
 
 if __name__ == '__main__':
