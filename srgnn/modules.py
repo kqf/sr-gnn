@@ -1,12 +1,3 @@
-#!/usr/bin/env python36
-# -*- coding: utf-8 -*-
-"""
-Created on July, 2018
-
-@author: Tangrizzly
-"""
-
-import datetime
 import math
 import torch
 from torch import nn
@@ -95,53 +86,3 @@ class SessionGraph(Module):
         get = lambda i: hidden[i][alias_inputs[i]]
         seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
         return self.compute_scores(seq_hidden, mask)
-
-
-
-def trans_to_cuda(variable):
-    if torch.cuda.is_available():
-        return variable.cuda()
-    else:
-        return variable
-
-
-def trans_to_cpu(variable):
-    if torch.cuda.is_available():
-        return variable.cpu()
-    else:
-        return variable
-
-
-def train_test(model, trainiterator, testiterator):
-    print('start training: ', datetime.datetime.now())
-    model.train()
-    total_loss = 0.0
-    for j, (batch, targets) in enumerate(trainiterator):
-        model.optimizer.zero_grad()
-        scores = model(**batch)
-        loss = model.loss_function(scores, targets)
-        loss.backward()
-        model.optimizer.step()
-        model.scheduler.step()
-        total_loss += loss
-        if j % int(len(batch["items"]) / 5 + 1) == 0:
-            print('[%d/%d] Loss: %.4f' % (
-                j, len(batch["items"][0]), loss.item()))
-    print('\tLoss:\t%.3f' % total_loss)
-
-    print('start predicting: ', datetime.datetime.now())
-    # model.eval()
-    # hit, mrr = [], []
-    # for batch in testiterator:
-    #     scores = forward(*batch)
-    #     sub_scores = scores.topk(20)[1]
-    #     sub_scores = trans_to_cpu(sub_scores).detach().numpy()
-    #     for score, target, mask in zip(sub_scores, targets, test_data.mask):
-    #         hit.append(np.isin(target - 1, score))
-    #         if len(np.where(score == target - 1)[0]) == 0:
-    #             mrr.append(0)
-    #         else:
-    #             mrr.append(1 / (np.where(score == target - 1)[0][0] + 1))
-    # hit = np.mean(hit) * 100
-    # mrr = np.mean(mrr) * 100
-    # return hit, mrr
