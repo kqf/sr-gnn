@@ -2,7 +2,7 @@
 
 
 train: data/processed
-	python model/main.py
+	python srgnn/main.py
 
 
 data/processed: data/
