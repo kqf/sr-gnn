@@ -1,4 +1,3 @@
-import math
 import torch
 from torch import nn
 from torch.nn import Parameter
@@ -71,44 +70,48 @@ class GNN(torch.nn.Module):
 class SRGNN(torch.nn.Module):
     def __init__(self, hidden_size, n_node, nonhybrid=True, step=1):
         super(SRGNN, self).__init__()
-        self.hidden_size = hidden_size
-        self.n_node = n_node
         self.nonhybrid = nonhybrid
-
-        self._emb = nn.Embedding(self.n_node, self.hidden_size)
-        self._gnn = GNN(self.hidden_size, step=step)
+        self._emb = nn.Embedding(n_node, hidden_size)
+        self._gnn = GNN(hidden_size, step=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc3 = torch.nn.Linear(hidden_size, 1, bias=False)
         self._fcp = torch.nn.Linear(hidden_size * 2, hidden_size)
 
-    def reset_parameters(self):
-        stdv = 1.0 / math.sqrt(self.hidden_size)
-        for weight in self.parameters():
-            weight.data.uniform_(-stdv, stdv)
+    def _scores(self, hidden, mask):
+        # [batch, hidden]
+        # TODO: Switch to the last item
+        ht = hidden[torch.arange(mask.shape[0]).long(), torch.sum(mask, 1) - 1]
 
-    def compute_scores(self, hidden, mask):
-        ht = hidden[torch.arange(mask.shape[0]).long(), torch.sum(
-            mask, 1) - 1]  # batch_size x latent_size
-        # batch_size x 1 x latent_size
-        q1 = self._fc1(ht).view(ht.shape[0], 1, ht.shape[1])
-        q2 = self._fc2(hidden)  # batch_size x seq_length x latent_size
+        # [batch, 1, hidden]
+        q1 = self._fc1(ht).unsqueeze(1)
+
+        # [batch, seq, hidden]
+        q2 = self._fc2(hidden)
+
         alpha = self._fc3(torch.sigmoid(q1 + q2))
-        a = torch.sum(alpha * hidden *
-                      mask.view(mask.shape[0], -1, 1).float(), 1)
+        a = torch.sum(alpha * hidden * mask.unsqueeze(-1), 1)
         if not self.nonhybrid:
             a = self._fcp(torch.cat([a, ht], 1))
-        b = self._emb.weight[1:]  # n_nodes x latent_size
-        scores = torch.matmul(a, b.transpose(1, 0))
-        return scores
 
-    def _forward(self, inputs, A):
-        emb = self._emb(inputs)
+        # [batch, hidden] @ [n_nodes x hidden].T
+        return a @ self._emb.weight[1:].T
+
+    def _embed(self, A, items):
+        emb = self._emb(items)
         hidden = self._gnn(A, emb)
         return hidden
 
     def forward(self, alias_inputs, A, items, mask):
-        # [batch_size, seq_len, hidden_size]
-        hidden = self._forward(items, A)
-        seq = batch_emb(hidden, alias_inputs)
-        return self.compute_scores(seq, mask)
+        # Use GNNs to exploit graph structure of the session
+        # items are needed only to extract features
+
+        # hidden [batch, seq, hidden]
+        hidden = self._embed(A, items)
+
+        # Use alias_inputs indexes to use the propagated embeddings
+        # seq [batch, seq, hidden]
+        embeddings = batch_emb(hidden, alias_inputs)
+
+        # Calculate the logprobs for the next items
+        return self._scores(embeddings, mask)
