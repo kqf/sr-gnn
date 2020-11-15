@@ -68,10 +68,10 @@ class GNN(torch.nn.Module):
 
 
 class SRGNN(torch.nn.Module):
-    def __init__(self, hidden_size, n_node, nonhybrid=True, step=1):
+    def __init__(self, hidden_size, vocab_size, nonhybrid=True, step=1):
         super(SRGNN, self).__init__()
         self.nonhybrid = nonhybrid
-        self._emb = nn.Embedding(n_node, hidden_size)
+        self._emb = nn.Embedding(vocab_size, hidden_size)
         self._gnn = GNN(hidden_size, step=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
@@ -94,7 +94,7 @@ class SRGNN(torch.nn.Module):
         if not self.nonhybrid:
             a = self._fcp(torch.cat([a, ht], 1))
 
-        # [batch, hidden] @ [n_nodes x hidden].T
+        # [batch, hidden] @ [vocab_size x hidden].T
         return a @ self._emb.weight[1:].T
 
     def _embed(self, A, items):

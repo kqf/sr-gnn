@@ -44,13 +44,13 @@ class GNN(Module):
 
 
 class SessionGraph(Module):
-    def __init__(self, hidden_size, n_node, nonhybrid=True, step=1):
+    def __init__(self, hidden_size, vocab_size, nonhybrid=True, step=1):
         super(SessionGraph, self).__init__()
         self.hidden_size = hidden_size
-        self.n_node = n_node
+        self.vocab_size = vocab_size
         self.nonhybrid = nonhybrid
 
-        self.embedding = nn.Embedding(self.n_node, self.hidden_size)
+        self.embedding = nn.Embedding(self.vocab_size, self.hidden_size)
         self.gnn = GNN(self.hidden_size, step=step)
         self.linear_one = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
         self.linear_two = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
@@ -72,7 +72,7 @@ class SessionGraph(Module):
         a = torch.sum(alpha * hidden * mask.view(mask.shape[0], -1, 1).float(), 1)
         if not self.nonhybrid:
             a = self.linear_transform(torch.cat([a, ht], 1))
-        b = self.embedding.weight[1:]  # n_nodes x latent_size
+        b = self.embedding.weight[1:]  # vocab_sizes x latent_size
         scores = torch.matmul(a, b.transpose(1, 0))
         return scores
 
