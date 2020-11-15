@@ -8,3 +8,4 @@ networkx
 torchtext
 scikit-learn
 skorch
+ir-metrics

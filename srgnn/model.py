@@ -8,6 +8,8 @@ from functools import partial
 from srgnn.modules import SessionGraph
 from srgnn.dataset import SequenceIterator, build_preprocessor
 
+from irmetrics.topk import recall, rr
+
 
 class DynamicVariablesSetter(skorch.callbacks.Callback):
     def on_train_begin(self, net, X, y):
@@ -30,6 +32,15 @@ class SeqNet(skorch.NeuralNet):
         # Now predict_proba returns top k indexes
         indexes = self.predict_proba(X)
         return np.take(X.fields["text"].vocab.itos, indexes)
+
+
+def scoring(model, X, y, k, func):
+    return func(y, model.predict_proba(X), k=k).mean()
+
+
+def ppx(model, X, y, entry="train_loss"):
+    loss = model.history[-1, entry]
+    return np.exp(-loss.item())
 
 
 def build_model(max_epochs=5, k=20):
@@ -62,6 +73,26 @@ def build_model(max_epochs=5, k=20):
         predict_nonlinearity=partial(inference, k=k, device=device),
         callbacks=[
             DynamicVariablesSetter(),
+            skorch.callbacks.EpochScoring(
+                partial(ppx, entry="valid_loss"),
+                name="perplexity",
+                use_caching=False,
+                lower_is_better=False,
+            ),
+            skorch.callbacks.BatchScoring(
+                partial(scoring, k=k, func=recall),
+                name="recall@20",
+                on_train=False,
+                lower_is_better=False,
+                use_caching=True
+            ),
+            skorch.callbacks.BatchScoring(
+                partial(scoring, k=k, func=rr),
+                name="mrr@20",
+                on_train=False,
+                lower_is_better=False,
+                use_caching=True
+            ),
             skorch.callbacks.ProgressBar()
         ]
     )
