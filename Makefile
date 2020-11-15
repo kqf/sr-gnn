@@ -6,7 +6,7 @@ train: data/processed
 
 
 data/processed: data/
-	python model/data.py --raw $^ --out $@
+	python srgnn/data.py --raw $^ --out $@
 	@echo "Training dataset:"
 	@head data/processed/train.txt
 

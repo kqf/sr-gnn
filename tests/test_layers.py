@@ -15,7 +15,7 @@ def _init(module):
 
 
 @pytest.fixture
-def batch(batch_size=128, vocab_size=100, seq_len=12):
+def batch(batch_size=128, vocab_size=200, seq_len=12):
     seq = torch.randint(0, vocab_size, (batch_size, seq_len))
     targets = torch.randint(0, vocab_size, (batch_size,))
     mask = ~torch.eq(seq, 0)

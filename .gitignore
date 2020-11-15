@@ -7,3 +7,4 @@
 
 *.egg*
 .coverage
+*sftp-config.json*
