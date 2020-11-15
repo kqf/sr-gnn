@@ -6,7 +6,7 @@ from sklearn.pipeline import make_pipeline
 from functools import partial
 
 from srgnn.modules import SessionGraph
-from srgnn.dataset import SequenceIterator, build_preprocessor
+from srgnn.dataset import SequenceIterator, build_preprocessor, train_split
 
 from irmetrics.topk import recall, rr
 
@@ -43,7 +43,19 @@ def ppx(model, X, y, entry="train_loss"):
     return np.exp(-loss.item())
 
 
-def build_model(max_epochs=5, k=20):
+def evaluate(model, data, title):
+    predicted = model.predict(data)
+
+    data["recall"] = recall(data["gold"], predicted)
+    data["rr"] = rr(data["gold"], predicted)
+
+    print("Evaluating on", title)
+    print("Recall", data["recall"].mean())
+    print("MRR", data["rr"].mean())
+    return data
+
+
+def build_model(X_val=None, max_epochs=5, k=20):
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -63,12 +75,12 @@ def build_model(max_epochs=5, k=20):
         max_epochs=max_epochs,
         batch_size=100,
         iterator_train=SequenceIterator,
-        # iterator_train__shuffle=True,
-        # iterator_train__sort=False,
+        iterator_train__shuffle=True,
+        iterator_train__sort=False,
         iterator_valid=SequenceIterator,
-        # iterator_valid__shuffle=False,
-        # iterator_valid__sort=False,
-        train_split=None,
+        iterator_valid__shuffle=False,
+        iterator_valid__sort=False,
+        train_split=partial(train_split, prep=preprocessor, X_val=X_val),
         device=device,
         predict_nonlinearity=partial(inference, k=k, device=device),
         callbacks=[

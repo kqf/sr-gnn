@@ -1,7 +1,7 @@
 import click
 from srgnn.data import read_data, ev_data
 
-from srgnn.model import build_model
+from srgnn.model import build_model, evaluate
 
 
 @click.command()
@@ -9,10 +9,14 @@ from srgnn.model import build_model
     "--path", type=click.Path(exists=True), default="data/processed/")
 def main(path):
     train, test, valid = read_data(path)
-    data = ev_data(train["text"])
+    X = ev_data(train["text"])
+    X_val = ev_data(train["text"])
 
-    model = build_model()
-    model.fit(data)
+    model = build_model(X_val=X_val)
+    model.fit(X)
+
+    evaluate(model, X, "train")
+    evaluate(model, X_val, "valid")
 
 
 if __name__ == '__main__':

@@ -77,3 +77,14 @@ class SequenceIterator(BucketIterator):
                 mask = ~torch.eq(batch.text, pi)
                 seq, target = batch.text, batch.gold.view(-1)
                 yield batch_tensors(seq, mask, target, self.device)
+
+
+def train_split(X, prep, X_val):
+    if X_val is None:
+        train, validation = Dataset.split(X)
+        # Fix for skorch sparsity checks
+        train.is_sparse = False
+        validation.is_sparse = False
+        return train, validation
+
+    return X, prep.transform(X_val)
