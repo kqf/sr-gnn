@@ -7,6 +7,7 @@ from sklearn.pipeline import make_pipeline
 from functools import partial
 
 from srgnn.modules import SessionGraph
+from srgnn.experimental import SRGNN
 from srgnn.dataset import SequenceIterator, build_preprocessor, train_split
 
 from irmetrics.topk import recall, rr
@@ -71,7 +72,7 @@ def build_model(X_val=None, max_epochs=1, k=20):
     # torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
     model = SeqNet(
-        module=SessionGraph,
+        module=SRGNN,
         module__hidden_size=100,
         module__vocab_size=30000,
         module__nonhybrid=True,
