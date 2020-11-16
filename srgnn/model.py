@@ -1,5 +1,6 @@
 import torch
 import skorch
+import random
 import numpy as np
 
 from sklearn.pipeline import make_pipeline
@@ -9,6 +10,13 @@ from srgnn.modules import SessionGraph
 from srgnn.dataset import SequenceIterator, build_preprocessor, train_split
 
 from irmetrics.topk import recall, rr
+
+SEED = 137
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
 
 
 class DynamicVariablesSetter(skorch.callbacks.Callback):
