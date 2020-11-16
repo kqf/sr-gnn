@@ -63,14 +63,14 @@ def evaluate(model, data, title):
     return data
 
 
-def build_model(X_val=None, max_epochs=5, k=20):
+def build_model(X_val=None, max_epochs=1, k=20):
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # TODO: Add LR-scheduler
     # torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
-    model = skorch.NeuralNet(
+    model = SeqNet(
         module=SessionGraph,
         module__hidden_size=100,
         module__vocab_size=30000,
