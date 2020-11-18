@@ -45,7 +45,7 @@ class GNN(torch.nn.Module):
             A[:, :, :A.shape[1]], self._ein(hidden)) + self.b_iah
 
         input_out = torch.matmul(
-            A[:, :, A.shape[1]: 2 * A.shape[1]], self._eou(hidden)) + self.b_oah
+            A[:, :, A.shape[1]:], self._eou(hidden)) + self.b_oah
 
         inputs = torch.cat([input_in, input_out], 2)
         gi = F.linear(inputs, self.w_ih, self.b_ih)
