@@ -69,7 +69,7 @@ def init(x, w):
     return torch.nn.init.uniform_(x, -var, var)
 
 
-def build_model(X_val=None, max_epochs=1, k=20):
+def build_model(X_val=None, max_epochs=5, k=20):
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

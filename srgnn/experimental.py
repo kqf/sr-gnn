@@ -1,5 +1,4 @@
 import torch
-from torch import nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 
@@ -38,18 +37,16 @@ class GNN(torch.nn.Module):
         self.b_iah = Parameter(torch.Tensor(self.hidden_size))
         self.b_oah = Parameter(torch.Tensor(self.hidden_size))
 
-        self.linear_edge_in = nn.Linear(
-            self.hidden_size, self.hidden_size, bias=True)
-        self.linear_edge_out = nn.Linear(
-            self.hidden_size, self.hidden_size, bias=True)
-        self.linear_edge_f = nn.Linear(
-            self.hidden_size, self.hidden_size, bias=True)
+        self._ein = torch.nn.Linear(hidden_size, hidden_size, bias=True)
+        self._eou = torch.nn.Linear(hidden_size, hidden_size, bias=True)
 
-    def GNNCell(self, A, hidden):
-        input_in = torch.matmul(A[:, :, :A.shape[1]],
-                                self.linear_edge_in(hidden)) + self.b_iah
+    def cell(self, A, hidden):
+        input_in = torch.matmul(
+            A[:, :, :A.shape[1]], self._ein(hidden)) + self.b_iah
+
         input_out = torch.matmul(
-            A[:, :, A.shape[1]: 2 * A.shape[1]], self.linear_edge_out(hidden)) + self.b_oah
+            A[:, :, A.shape[1]: 2 * A.shape[1]], self._eou(hidden)) + self.b_oah
+
         inputs = torch.cat([input_in, input_out], 2)
         gi = F.linear(inputs, self.w_ih, self.b_ih)
         gh = F.linear(hidden, self.w_hh, self.b_hh)
@@ -63,7 +60,7 @@ class GNN(torch.nn.Module):
 
     def forward(self, A, hidden):
         for i in range(self.step):
-            hidden = self.GNNCell(A, hidden)
+            hidden = self.cell(A, hidden)
         return hidden
 
 
@@ -71,7 +68,7 @@ class SRGNN(torch.nn.Module):
     def __init__(self, hidden_size, vocab_size, nonhybrid=True, step=1):
         super(SRGNN, self).__init__()
         self.nonhybrid = nonhybrid
-        self._emb = nn.Embedding(vocab_size, hidden_size)
+        self._emb = torch.nn.Embedding(vocab_size, hidden_size)
         self._gnn = GNN(hidden_size, step=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
