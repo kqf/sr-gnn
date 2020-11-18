@@ -17,7 +17,7 @@ def batch_emb(emb, x):
     embs = emb.view(-1, eshape[-1])
 
     device = embs.device
-    offset = torch.arange(eshape[0], device=device) * (x.shape[1])
+    offset = torch.arange(eshape[0], device=device) * (eshape[1])
 
     # Convert sequence of indexes to indexes in a new matrix
     idx = x + offset.unsqueeze(-1)
