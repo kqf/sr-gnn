@@ -64,6 +64,11 @@ def evaluate(model, data, title):
     return data
 
 
+def init(x, w):
+    var = 1.0 / np.sqrt(w)
+    return torch.nn.init.uniform_(x, -var, var)
+
+
 def build_model(X_val=None, max_epochs=1, k=20):
     preprocessor = build_preprocessor(min_freq=1)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -71,12 +76,13 @@ def build_model(X_val=None, max_epochs=1, k=20):
     # TODO: Add LR-scheduler
     # torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
+    hidden_size = 100
     model = SeqNet(
         module=SRGNN,
-        module__hidden_size=100,
+        module__hidden_size=hidden_size,
         module__vocab_size=30000,
         module__nonhybrid=True,
-        module__step=1,
+        module__step=2,
         optimizer=torch.optim.Adam,
         optimizer__lr=0.001,
         optimizer__weight_decay=1e-5,
@@ -114,7 +120,8 @@ def build_model(X_val=None, max_epochs=1, k=20):
                 lower_is_better=False,
                 use_caching=True
             ),
-            skorch.callbacks.ProgressBar()
+            skorch.callbacks.ProgressBar(),
+            skorch.callbacks.Initializer("*", fn=partial(init, w=hidden_size)),
         ]
     )
 
