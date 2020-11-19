@@ -55,12 +55,11 @@ def batch_tensors(seq, mask, target, device):
     alias_inputs, A = batch_adjacency(seq.numpy())
 
     batch = {}
-    batch["alias_inputs"] = torch.tensor(alias_inputs).long().to(device)
-    batch["items"] = torch.tensor(seq).long().to(device)
+    batch["alias_inputs"] = torch.tensor(alias_inputs).to(device)
+    batch["items"] = torch.tensor(seq).to(device)
     batch["A"] = torch.tensor(A).float().to(device)
-    batch["mask"] = torch.tensor(mask).long().to(device)
-
-    target = torch.tensor(target).long().to(device)
+    batch["mask"] = torch.tensor(mask).to(device)
+    target = torch.tensor(target).to(device)
     return batch, target
 
 
