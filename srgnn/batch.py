@@ -40,4 +40,4 @@ def batch_adjacency(sequence):
     out = out.reshape(*asize)
 
     # Concatenate as in the original implementation
-    return np.concatenate([inp, out], -1)
+    return aliases, np.concatenate([inp, out], -1)
