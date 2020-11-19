@@ -52,6 +52,7 @@ def build_preprocessor(min_freq=5):
 
 
 def batch_tensors(seq, mask, target, device):
+
     alias_inputs, A, items, mask, targets = batchf(
         seq.numpy(), mask.numpy(), target.numpy())
 

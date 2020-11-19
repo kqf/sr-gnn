@@ -9,6 +9,8 @@ Created on July, 2018
 import networkx as nx
 import numpy as np
 
+from srgnn.batch import batch_adjacency
+
 
 def build_graph(train_data):
     graph = nx.DiGraph()
@@ -55,6 +57,8 @@ def split_validation(train_set, valid_portion):
 
 
 def batch(inputs, mask, targets):
+    alias_inputs, A = batch_adjacency(inputs)
+    return alias_inputs, A, inputs, mask, targets
     items, n_node, A, alias_inputs = [], [], [], []
 
     for u_input in inputs:
