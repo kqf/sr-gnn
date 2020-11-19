@@ -1,6 +1,5 @@
 import torch
 from torch.nn import Parameter
-import torch.nn.functional as F
 
 
 def batch_emb(emb, x):
