@@ -39,5 +39,5 @@ def batch_adjacency(sequence):
     out[ix(aliases[:, 1:], aliases[:, :-1], seq_size)] = 1.
     out = out.reshape(*asize)
 
-    print(out.shape)
+    # Concatenate as in the original implementation
     return np.concatenate([inp, out], -1)
