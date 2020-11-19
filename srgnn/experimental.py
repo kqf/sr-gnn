@@ -38,12 +38,9 @@ class GNN(torch.nn.Module):
         self._ein = torch.nn.Linear(hidden_size, hidden_size, bias=True)
         self._eou = torch.nn.Linear(hidden_size, hidden_size, bias=True)
 
-    def cell(self, A, hidden):
-        input_in = torch.matmul(
-            A[:, :, :A.shape[1]], self._ein(hidden)) + self.b_iah
-
-        input_out = torch.matmul(
-            A[:, :, A.shape[1]:], self._eou(hidden)) + self.b_oah
+    def cell(self, ain, aou, hidden):
+        input_in = torch.matmul(ain, self._ein(hidden)) + self.b_iah
+        input_out = torch.matmul(aou, self._eou(hidden)) + self.b_oah
 
         inputs = torch.cat([input_in, input_out], 2)
 
@@ -60,9 +57,9 @@ class GNN(torch.nn.Module):
         hy = newgate + inputgate * (hidden - newgate)
         return hy
 
-    def forward(self, A, hidden):
+    def forward(self, ain, aou, hidden):
         for i in range(self.step):
-            hidden = self.cell(A, hidden)
+            hidden = self.cell(ain, aou, hidden)
         return hidden
 
 
@@ -96,17 +93,17 @@ class SRGNN(torch.nn.Module):
         # [batch, hidden] @ [vocab_size x hidden].T
         return a @ self._emb.weight[1:].T
 
-    def _embed(self, A, items):
+    def _embed(self, ain, aou, items):
         emb = self._emb(items)
-        hidden = self._gnn(A, emb)
+        hidden = self._gnn(ain, aou, emb)
         return hidden
 
-    def forward(self, alias_inputs, A, items, mask):
+    def forward(self, alias_inputs, ain, aou, items, mask):
         # Use GNNs to exploit graph structure of the session
         # items are needed only to extract features
 
         # hidden [batch, seq, hidden]
-        hidden = self._embed(A, items)
+        hidden = self._embed(ain, aou, items)
 
         # Use alias_inputs indexes to use the propagated embeddings
         # seq [batch, seq, hidden]

@@ -23,9 +23,9 @@ class GNN(Module):
         self.linear_edge_out = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
         self.linear_edge_f = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
 
-    def GNNCell(self, A, hidden):
-        input_in = torch.matmul(A[:, :, :A.shape[1]], self.linear_edge_in(hidden)) + self.b_iah
-        input_out = torch.matmul(A[:, :, A.shape[1]: 2 * A.shape[1]], self.linear_edge_out(hidden)) + self.b_oah
+    def GNNCell(self, ain, aou, hidden):
+        input_in = torch.matmul(ain, self.linear_edge_in(hidden)) + self.b_iah
+        input_out = torch.matmul(aou, self.linear_edge_out(hidden)) + self.b_oah
         inputs = torch.cat([input_in, input_out], 2)
         gi = F.linear(inputs, self.w_ih, self.b_ih)
         gh = F.linear(hidden, self.w_hh, self.b_hh)
@@ -37,9 +37,9 @@ class GNN(Module):
         hy = newgate + inputgate * (hidden - newgate)
         return hy
 
-    def forward(self, A, hidden):
+    def forward(self, ain, aou, hidden):
         for i in range(self.step):
-            hidden = self.GNNCell(A, hidden)
+            hidden = self.GNNCell(ain, aou, hidden)
         return hidden
 
 
@@ -76,13 +76,13 @@ class SessionGraph(Module):
         scores = torch.matmul(a, b.transpose(1, 0))
         return scores
 
-    def _forward(self, inputs, A):
+    def _forward(self, inputs, ain, aou):
         hidden = self.embedding(inputs)
-        hidden = self.gnn(A, hidden)
+        hidden = self.gnn(ain, aou, hidden)
         return hidden
 
-    def forward(self, alias_inputs, A, items, mask):
-        hidden = self._forward(items, A)
+    def forward(self, alias_inputs, ain, aou, items, mask):
+        hidden = self._forward(items, ain, aou)
         get = lambda i: hidden[i][alias_inputs[i]]
         seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
         return self.compute_scores(seq_hidden, mask)
