@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 
 
@@ -41,3 +42,15 @@ def batch_adjacency(sequence):
 
     # Concatenate as in the original implementation
     return aliases, np.concatenate([inp, out], -1)
+
+
+def batch(seq, mask, target, device):
+    alias_inputs, A = batch_adjacency(seq.numpy())
+
+    batch = {}
+    batch["alias_inputs"] = torch.tensor(alias_inputs).to(device)
+    batch["items"] = torch.tensor(seq).to(device)
+    batch["A"] = torch.tensor(A).float().to(device)
+    batch["mask"] = torch.tensor(mask).to(device)
+    target = torch.tensor(target).to(device)
+    return batch, target

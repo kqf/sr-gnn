@@ -4,7 +4,7 @@ import torch
 from sklearn.base import BaseEstimator, TransformerMixin
 from torchtext.data import Example, Dataset, Field, BucketIterator
 
-from srgnn.batch import batch_adjacency
+from srgnn.batch import batch
 
 
 class PandasDataset(Dataset):
@@ -51,18 +51,6 @@ def build_preprocessor(min_freq=5):
         return TextPreprocessor(fields, min_freq=min_freq)
 
 
-def batch_tensors(seq, mask, target, device):
-    alias_inputs, A = batch_adjacency(seq.numpy())
-
-    batch = {}
-    batch["alias_inputs"] = torch.tensor(alias_inputs).to(device)
-    batch["items"] = torch.tensor(seq).to(device)
-    batch["A"] = torch.tensor(A).float().to(device)
-    batch["mask"] = torch.tensor(mask).to(device)
-    target = torch.tensor(target).to(device)
-    return batch, target
-
-
 class SequenceIterator(BucketIterator):
     def __init__(self, *args, **kwargs):
         with warnings.catch_warnings(record=True):
@@ -71,10 +59,10 @@ class SequenceIterator(BucketIterator):
     def __iter__(self):
         pi = self.dataset.fields["text"].vocab.stoi["<pad>"]
         with warnings.catch_warnings(record=True):
-            for batch in super().__iter__():
-                mask = ~torch.eq(batch.text, pi)
-                seq, target = batch.text, batch.gold.view(-1)
-                yield batch_tensors(seq, mask, target, self.device)
+            for batch_ in super().__iter__():
+                mask = ~torch.eq(batch_.text, pi)
+                seq, target = batch_.text, batch_.gold.view(-1)
+                yield batch(seq, mask, target, self.device)
 
 
 def train_split(X, prep, X_val):

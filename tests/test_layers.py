@@ -3,7 +3,7 @@ import pytest
 
 from srgnn.modules import SessionGraph
 from srgnn.experimental import SRGNN
-from srgnn.dataset import batch_tensors
+from srgnn.batch import batch as batch_tensors
 
 
 def _init(module):
