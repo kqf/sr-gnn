@@ -4,7 +4,7 @@ import torch
 from sklearn.base import BaseEstimator, TransformerMixin
 from torchtext.data import Example, Dataset, Field, BucketIterator
 
-from srgnn.utils import batch as batchf
+from srgnn.batch import batch_adjacency
 
 
 class PandasDataset(Dataset):
@@ -52,13 +52,11 @@ def build_preprocessor(min_freq=5):
 
 
 def batch_tensors(seq, mask, target, device):
-
-    alias_inputs, A, items, mask, targets = batchf(
-        seq.numpy(), mask.numpy(), target.numpy())
+    alias_inputs, A = batch_adjacency(seq.numpy())
 
     batch = {}
     batch["alias_inputs"] = torch.tensor(alias_inputs).long().to(device)
-    batch["items"] = torch.tensor(items).long().to(device)
+    batch["items"] = torch.tensor(seq).long().to(device)
     batch["A"] = torch.tensor(A).float().to(device)
     batch["mask"] = torch.tensor(mask).long().to(device)
 
