@@ -4,7 +4,6 @@ kaggle
 click
 pandas
 torch
-networkx
 torchtext
 scikit-learn
 skorch
