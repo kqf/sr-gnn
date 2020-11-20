@@ -22,9 +22,9 @@ def batch_emb(emb, x):
     return embs[idx]
 
 
-class GNN(torch.nn.Module):
+class GatedGraphConv(torch.nn.Module):
     def __init__(self, hidden_size, step=1):
-        super(GNN, self).__init__()
+        super(GatedGraphConv, self).__init__()
         self.step = step
         input_size = hidden_size * 2
         gate_size = 3 * hidden_size
@@ -38,14 +38,14 @@ class GNN(torch.nn.Module):
         self._ein = torch.nn.Linear(hidden_size, hidden_size, bias=True)
         self._eou = torch.nn.Linear(hidden_size, hidden_size, bias=True)
 
-    def cell(self, ain, aou, hidden):
-        input_in = torch.matmul(ain, self._ein(hidden)) + self.b_iah
-        input_out = torch.matmul(aou, self._eou(hidden)) + self.b_oah
+    def cell(self, ain, aou, embs):
+        input_in = torch.matmul(ain, self._ein(embs)) + self.b_iah
+        input_out = torch.matmul(aou, self._eou(embs)) + self.b_oah
 
         inputs = torch.cat([input_in, input_out], 2)
 
         gi = self._igate(inputs)
-        gh = self._hgate(hidden)
+        gh = self._hgate(embs)
 
         i_r, i_i, i_n = gi.chunk(3, 2)
         h_r, h_i, h_n = gh.chunk(3, 2)
@@ -54,7 +54,7 @@ class GNN(torch.nn.Module):
         inputgate = torch.sigmoid(i_i + h_i)
 
         newgate = torch.tanh(i_n + resetgate * h_n)
-        hy = newgate + inputgate * (hidden - newgate)
+        hy = newgate + inputgate * (embs - newgate)
         return hy
 
     def forward(self, ain, aou, hidden):
@@ -68,7 +68,7 @@ class SRGNN(torch.nn.Module):
         super(SRGNN, self).__init__()
         self.nonhybrid = nonhybrid
         self._emb = torch.nn.Embedding(vocab_size, hidden_size)
-        self._gnn = GNN(hidden_size, step=step)
+        self._gnn = GatedGraphConv(hidden_size, step=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc3 = torch.nn.Linear(hidden_size, 1, bias=False)
