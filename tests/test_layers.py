@@ -1,7 +1,7 @@
 import torch
 import pytest
 
-from srgnn.modules import SessionGraph
+from srgnn.legacy import SessionGraph
 from srgnn.experimental import SRGNN
 from srgnn.batch import batch as batch_tensors
 
