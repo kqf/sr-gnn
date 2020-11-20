@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 
 
 def ix(a, b, seq_size):
@@ -19,33 +18,34 @@ def ix(a, b, seq_size):
     """
     batch_size, _ = a.shape
     idx_per_batch = a + seq_size * b
-    batch_offset = seq_size * seq_size * np.arange(batch_size)
+    batch_offset = seq_size * seq_size * torch.arange(batch_size)
     return idx_per_batch + batch_offset[:, None]
 
 
 def batch_adjacency(sequence):
     # Replace ids to indexes inside the adjacency matrix
-    aliases = (sequence[:, :, None] == sequence[:, None, :]).argmax(1)
+    eq = sequence[:, :, None] == sequence[:, None, :]
+    aliases = eq.long().argmax(1)
 
     batch_size, seq_size = sequence.shape
     asize = (batch_size, seq_size, seq_size)
 
     # Calculate the incoming edges
-    inp = np.zeros(asize).reshape(-1)
+    inp = torch.zeros(asize).view(-1)
     inp[ix(aliases[:, :-1], aliases[:, 1:], seq_size)] = 1.
-    inp = inp.reshape(*asize)
+    inp = inp.view(*asize)
 
     # Calculate the outgoing edges
-    out = np.zeros(asize).reshape(-1)
+    out = torch.zeros(asize).view(-1)
     out[ix(aliases[:, 1:], aliases[:, :-1], seq_size)] = 1.
-    out = out.reshape(*asize)
+    out = out.view(*asize)
 
     # Concatenate as in the original implementation
     return aliases, inp, out
 
 
 def batch(seq, mask, target, device):
-    alias_inputs, ain, aou = batch_adjacency(seq.numpy())
+    alias_inputs, ain, aou = batch_adjacency(seq)
 
     batch = {}
     batch["alias_inputs"] = torch.tensor(alias_inputs).to(device)
