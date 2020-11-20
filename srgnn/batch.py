@@ -48,10 +48,9 @@ def batch(seq, mask, target, device):
     alias_inputs, ain, aou = batch_adjacency(seq)
 
     batch = {}
-    batch["alias_inputs"] = torch.tensor(alias_inputs).to(device)
-    batch["items"] = torch.tensor(seq).to(device)
-    batch["ain"] = torch.tensor(ain).float().to(device)
-    batch["aou"] = torch.tensor(aou).float().to(device)
-    batch["mask"] = torch.tensor(mask).to(device)
-    target = torch.tensor(target).to(device)
+    batch["alias_inputs"] = alias_inputs
+    batch["items"] = seq
+    batch["ain"] = ain
+    batch["aou"] = aou
+    batch["mask"] = mask
     return batch, target
