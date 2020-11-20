@@ -6,8 +6,8 @@ import numpy as np
 from sklearn.pipeline import make_pipeline
 from functools import partial
 
-from srgnn.legacy import SessionGraph
-from srgnn.experimental import SRGNN
+# from srgnn.legacy import SessionGraph
+from srgnn.layers import SRGNN
 from srgnn.dataset import SequenceIterator, build_preprocessor, train_split
 
 from irmetrics.topk import recall, rr
