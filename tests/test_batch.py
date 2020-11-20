@@ -1,12 +1,12 @@
 import pytest
-import numpy as np
+import torch
 
 from srgnn.batch import batch_adjacency
 
 
 @pytest.fixture
 def sequence(batch_size, seq_size):
-    return np.random.randint(0, 5, (batch_size, seq_size))
+    return torch.randint(0, 5, (batch_size, seq_size))
 
 
 @pytest.mark.parametrize("batch_size", [8, 32, 128, 137])
