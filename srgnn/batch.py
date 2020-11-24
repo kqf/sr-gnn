@@ -40,12 +40,17 @@ def batch_adjacency(sequence):
     out[ix(aliases[:, 1:], aliases[:, :-1], seq_size)] = 1.
     out = out.view(*asize)
 
+    sources = aliases[:, 1:].reshape(-1, 1)
+    targets = aliases[:, :-1].reshape(-1, 1)
+
+    edge_index = torch.cat([sources, targets], axis=-1).reshape(batch_size, -1)
+
     # Concatenate as in the original implementation
-    return aliases, inp, out
+    return aliases, inp, out, edge_index
 
 
 def batch(seq, mask, target, device):
-    alias_inputs, ain, aou = batch_adjacency(seq)
+    alias_inputs, ain, aou, edge_index = batch_adjacency(seq)
 
     batch = {}
     batch["alias_inputs"] = alias_inputs
@@ -53,4 +58,5 @@ def batch(seq, mask, target, device):
     batch["ain"] = ain
     batch["aou"] = aou
     batch["mask"] = mask
+    batch["edge_index"] = edge_index
     return batch, target

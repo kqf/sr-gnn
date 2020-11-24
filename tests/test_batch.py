@@ -12,7 +12,7 @@ def sequence(batch_size, seq_size):
 @pytest.mark.parametrize("batch_size", [8, 32, 128, 137])
 @pytest.mark.parametrize("seq_size", [8, 32, 128, 137])
 def test_batch(sequence, batch_size, seq_size):
-    alias, ain, aou = batch_adjacency(sequence)
+    alias, ain, aou, edge_index = batch_adjacency(sequence)
 
     # Indices within the adjacency matrices
     assert alias.shape == (batch_size, seq_size)
