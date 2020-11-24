@@ -8,8 +8,3 @@ torchtext
 scikit-learn
 skorch
 ir-metrics
-torch-scatter
-torch-sparse
-torch-cluster
-torch-spline-conv
-torch-geometric
