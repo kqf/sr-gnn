@@ -50,7 +50,7 @@ def batch_adjacency(sequence):
 
 
 def batch(seq, mask, target, device):
-    alias_inputs, ain, aou = batch_adjacency(seq)
+    alias_inputs, ain, aou, edge_index = batch_adjacency(seq)
 
     batch = {}
     batch["alias_inputs"] = alias_inputs
@@ -58,4 +58,5 @@ def batch(seq, mask, target, device):
     batch["ain"] = ain
     batch["aou"] = aou
     batch["mask"] = mask
+    batch["edge_index"] = edge_index
     return batch, target
