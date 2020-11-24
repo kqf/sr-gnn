@@ -98,7 +98,7 @@ class SRGNN(torch.nn.Module):
         hidden = self._gnn(ain, aou, emb)
         return hidden
 
-    def forward(self, alias_inputs, ain, aou, items, mask):
+    def forward(self, alias_inputs, ain, aou, items, mask, edge_index):
         # Use GNNs to exploit graph structure of the session
         # items are needed only to extract features
 

@@ -81,7 +81,7 @@ class SessionGraph(Module):
         hidden = self.gnn(ain, aou, hidden)
         return hidden
 
-    def forward(self, alias_inputs, ain, aou, items, mask):
+    def forward(self, alias_inputs, ain, aou, items, mask, edge_index):
         hidden = self._forward(items, ain, aou)
         get = lambda i: hidden[i][alias_inputs[i]]
         seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
