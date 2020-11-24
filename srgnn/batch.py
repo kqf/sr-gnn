@@ -43,7 +43,7 @@ def batch_adjacency(sequence):
     sources = aliases[:, 1:].reshape(-1, 1)
     targets = aliases[:, :-1].reshape(-1, 1)
 
-    edge_index = torch.cat([sources, targets], axis=-1)
+    edge_index = torch.cat([sources, targets], axis=-1).reshape(batch_size, -1)
 
     # Concatenate as in the original implementation
     return aliases, inp, out, edge_index
