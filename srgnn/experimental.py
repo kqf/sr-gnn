@@ -1,4 +1,5 @@
 import torch
+import torch_geometric
 from torch.nn import Parameter
 
 
@@ -68,7 +69,8 @@ class SRGNN(torch.nn.Module):
         super(SRGNN, self).__init__()
         self.nonhybrid = nonhybrid
         self._emb = torch.nn.Embedding(vocab_size, hidden_size)
-        self._gnn = GatedGraphConv(hidden_size, step=step)
+        self._gnn = torch_geometric.nn.GatedGraphConv(hidden_size,
+                                                      num_layers=step)
         self._fc1 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc2 = torch.nn.Linear(hidden_size, hidden_size)
         self._fc3 = torch.nn.Linear(hidden_size, 1, bias=False)
@@ -93,21 +95,22 @@ class SRGNN(torch.nn.Module):
         # [batch, hidden] @ [vocab_size x hidden].T
         return a @ self._emb.weight[1:].T
 
-    def _embed(self, ain, aou, items):
+    def _embed(self, ain, aou, items, edge_index):
         emb = self._emb(items)
-        hidden = self._gnn(ain, aou, emb)
-        return hidden
+        eshape = emb.shape
+        hidden = self._gnn(emb.view(-1, eshape[-1]), edge_index.view(2, -1))
+        return hidden.view(*eshape)
 
     def forward(self, alias_inputs, ain, aou, items, mask, edge_index):
         # Use GNNs to exploit graph structure of the session
         # items are needed only to extract features
 
         # hidden [batch, seq, hidden]
-        hidden = self._embed(ain, aou, items)
+        embeddings = self._embed(ain, aou, items, edge_index)
 
         # Use alias_inputs indexes to use the propagated embeddings
         # seq [batch, seq, hidden]
-        embeddings = batch_emb(hidden, alias_inputs)
+        # embeddings = batch_emb(hidden, alias_inputs)
 
         # Calculate the logprobs for the next items
         return self._scores(embeddings, mask)
