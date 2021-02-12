@@ -1,7 +1,6 @@
 import torch
 import pytest
 
-from srgnn.legacy import SessionGraph
 from srgnn.layers import SRGNN
 from srgnn.batch import batch as batch_tensors
 
@@ -24,10 +23,5 @@ def batch(batch_size=128, vocab_size=200, seq_len=12):
 
 
 def test_modules(batch):
-    original = _init(SessionGraph(100, 30000))
-    reference = original(**batch)
-
     experimental = _init(SRGNN(100, 30000))
-    output = experimental(**batch)
-
-    assert torch.allclose(output, reference)
+    experimental(**batch)
